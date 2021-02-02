@@ -22,6 +22,9 @@
 
 #import "ODBusinessAuthProvider.h"
 #import <ADAL/ADAuthenticationContext.h>
+#import <ADAL/ADAuthenticationResult.h>
+#import <ADAL/ADTokenCacheItem.h>
+#import <ADAL/ADUserInformation.h>
 #import "ODServiceInfo.h"
 #import "ODAuthProvider+Protected.h"
 #import "ODAuthHelper.h"
@@ -76,10 +79,12 @@
                                                                                                     }];
                                               completionHandler(apiEndpointError);
                                           }
-                                          else if (result.tokenCacheStoreItem.refreshToken){
-                                              [self.authContext acquireTokenByRefreshToken:result.tokenCacheStoreItem.refreshToken clientId:self.serviceInfo.appId resource:self.serviceInfo.resourceId completionBlock:^(ADAuthenticationResult *innerResult){
+                                          else if (result.tokenCacheItem.refreshToken){
+                                              [self.authContext acquireTokenWithRefreshToken:result.tokenCacheItem.refreshToken resource:self.serviceInfo.resourceId clientId:self.serviceInfo.appId redirectUri:self.serviceInfo.redirectURL completionBlock:
+//                                              [self.authContext acquireTokenByRefreshToken:result.tokenCacheItem.refreshToken clientId:self.serviceInfo.appId resource:self.serviceInfo.resourceId completionBlock:
+                                               ^(ADAuthenticationResult *innerResult){
                                                   if (innerResult.status == AD_SUCCEEDED) {
-                                                      innerResult.tokenCacheStoreItem.userInformation = result.tokenCacheStoreItem.userInformation;
+                                                      innerResult.tokenCacheItem.userInformation = result.tokenCacheItem.userInformation;
                                                       
                                                       [self setAccountSessionWithAuthResult:innerResult];
                                                       completionHandler(nil);
@@ -112,10 +117,10 @@
 
 - (void)setAccountSessionWithAuthResult:(ADAuthenticationResult *)result
 {
-    self.accountSession = [[ODAccountSession alloc] initWithId:result.tokenCacheStoreItem.userInformation.userId
-                                                   accessToken:result.tokenCacheStoreItem.accessToken
-                                                       expires:result.tokenCacheStoreItem.expiresOn
-                                                  refreshToken:result.tokenCacheStoreItem.refreshToken
+    self.accountSession = [[ODAccountSession alloc] initWithId:result.tokenCacheItem.userInformation.userId
+                                                   accessToken:result.tokenCacheItem.accessToken
+                                                       expires:result.tokenCacheItem.expiresOn
+                                                  refreshToken:result.tokenCacheItem.refreshToken
                                                    serviceInfo:self.serviceInfo];
     if (self.accountSession.refreshToken){
         [self.accountStore storeCurrentAccount:self.accountSession];
@@ -153,14 +158,18 @@
 
 - (void)refreshSession:(ODAccountSession *)session withCompletion:(void (^)(ODAccountSession *updatedSession, NSError *error))completionHandler
 {
-    [self.authContext acquireTokenByRefreshToken:session.refreshToken
-                                        clientId:self.serviceInfo.appId
-                                        resource:self.serviceInfo.resourceId
+    [self.authContext acquireTokenWithRefreshToken:session.refreshToken
+                                          resource:self.serviceInfo.resourceId
+                                          clientId:self.serviceInfo.appId
+                                       redirectUri:self.serviceInfo.redirectURL
+//    [self.authContext acquireTokenByRefreshToken:session.refreshToken
+//                                        resource:self.serviceInfo.resourceId
+//                                        clientId:self.serviceInfo.appId
                                  completionBlock:^(ADAuthenticationResult *authResult){
                                      if (authResult.status == AD_SUCCEEDED){
                                          session.accessToken = authResult.accessToken;
-                                         session.refreshToken = authResult.tokenCacheStoreItem.refreshToken;
-                                         session.expires = authResult.tokenCacheStoreItem.expiresOn;
+                                         session.refreshToken = authResult.tokenCacheItem.refreshToken;
+                                         session.expires = authResult.tokenCacheItem.expiresOn;
                                          completionHandler(session, nil);
                                      }
                                      else {

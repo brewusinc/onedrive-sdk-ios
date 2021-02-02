@@ -22,7 +22,7 @@
 #import "ODAADAccountBridge.h"
 
 #import <ADAL/ADUserInformation.h>
-#import <ADAL/ADTokenCacheStoreItem.h>
+#import <ADAL/ADTokenCacheItem.h>
 #import <Base32/MF_Base32Additions.h>
 
 #import "ODAccountSession.h"
@@ -30,11 +30,11 @@
 
 @implementation ODAADAccountBridge
 
-+ (ADTokenCacheStoreItem *)cacheItemFromAccountSession:(ODAccountSession *)account
++ (ADTokenCacheItem *)cacheItemFromAccountSession:(ODAccountSession *)account
 {
     NSParameterAssert(account);
     
-    ADTokenCacheStoreItem *cacheItem = [[ADTokenCacheStoreItem alloc] init];
+    ADTokenCacheItem *cacheItem = [[ADTokenCacheItem alloc] init];
     cacheItem.clientId = account.serviceInfo.appId;
     cacheItem.authority = account.serviceInfo.authorityURL;
     cacheItem.resource = account.serviceInfo.resourceId;
@@ -42,11 +42,11 @@
     cacheItem.refreshToken = account.refreshToken;
     cacheItem.expiresOn = account.expires;
     NSString *adalSafeUserId = [ODAADAccountBridge adalSafeUserIdFromString:account.accountId];
-    cacheItem.userInformation = [ADUserInformation userInformationWithUserId:adalSafeUserId error:nil];
+    cacheItem.userInformation = [ADUserInformation userInformationWithIdToken:adalSafeUserId error:nil];
     return cacheItem;
 }
 
-+ (ODAccountSession *)accountSessionFromCacheItem:(ADTokenCacheStoreItem *)cacheStoreItem serviceInfo:(ODServiceInfo *)serviceInfo
++ (ODAccountSession *)accountSessionFromCacheItem:(ADTokenCacheItem *)cacheStoreItem serviceInfo:(ODServiceInfo *)serviceInfo
 {
     NSParameterAssert(cacheStoreItem);
     NSString *decodedUserId = [ODAADAccountBridge stringFromAdalSafeUserId:cacheStoreItem.userInformation.userId];
