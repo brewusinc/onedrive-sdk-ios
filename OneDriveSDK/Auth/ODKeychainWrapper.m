@@ -57,14 +57,14 @@
 }
 
 
-//- (void)addOrUpdateAccount:(ODAccountSession *)account;
-//{
-//    NSParameterAssert(account);
-//
-//    ADTokenCacheStoreItem *accountItem = [ODAADAccountBridge cacheItemFromAccountSession:account];
-//    ADAuthenticationError *authError = nil;
+- (void)addOrUpdateAccount:(ODAccountSession *)account
+{
+    NSParameterAssert(account);
+
+    ADTokenCacheStoreItem *accountItem = [ODAADAccountBridge cacheItemFromAccountSession:account];
+    ADAuthenticationError *authError = nil;
 //    [self.keychainStore addOrUpdateItem:accountItem error:&authError];
-//}
+}
 
 
 - (ODAccountSession *)readFromKeychainWithAccountId:(NSString *)accountId serviceInfo:(ODServiceInfo *)serviceInfo
